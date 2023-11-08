@@ -10,8 +10,6 @@ import torch.optim as optim
 import torch.nn as nn
 import random
 
-
-# 1. 检查是否可以利用GPU
 trainOnGpu = torch.cuda.is_available()
 # trainOnGpu = False
 
@@ -21,7 +19,6 @@ else:
 
     print('CUDA is available!')
 
-# 2. 解压缩训练数据集和测试数据集
 train_data_path = r'./mydata/trainData3_data.npy'
 train_label_path = r'./mydata/trainData3_label.npy'
 
