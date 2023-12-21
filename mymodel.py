@@ -54,12 +54,12 @@ class SAE(nn.Module):
     def forward(self, x):
         x = x.to(torch.float32)
         x = self.firstConv(x)
-        y = self.lastConv(x)
-        outputs = self.model(x)
+        # y = self.lastConv(x)
+        outputs = self.model(x) #extract features by Swin Transformer (There is a default code here)
 
-        e1 = outputs[0]
-        e2 = outputs[1]
-        e3 = outputs[2]
+        # e1 = outputs[0]
+        # e2 = outputs[1]
+        # e3 = outputs[2]
         e4 = outputs[3]
 
         return e4
