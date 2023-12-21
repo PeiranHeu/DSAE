@@ -12,7 +12,7 @@ import torch.nn.functional as F
 import tqdm
 
 
-trainOnGpu = torch.cuda.is_available()
+trainOnGpu = torch.cuda.is_available()  #check if the GPU is available
 
 if not trainOnGpu:
     print('CUDA is not available.')
@@ -20,7 +20,7 @@ else:
     print('CUDA is available!')
 
 
-trainF1 = open("./data/trainData1", "rb")
+trainF1 = open("./data/trainData1", "rb") # open the datasets
 trainF2 = open("./data/trainData2", "rb")
 testF1 = open("./data/testData1", "rb")
 testF2 = open("./data/testData2", "rb")
@@ -58,24 +58,24 @@ testData3 = GetLoaderSAE(testFBanks1, testLabels1)
 testData4 = GetLoaderSAE(testFBanks2, testLabels2)
 
 
-batchSize = 1
+batchSize = 8
 
 
 trainLoader1 = torch.utils.data.DataLoader(trainData1, batch_size=batchSize, shuffle=True, drop_last=False,
-                                           num_workers=0)
+                                           num_workers=0) #load the datasets for training set
 trainLoader2 = torch.utils.data.DataLoader(trainData2, batch_size=batchSize, shuffle=True, drop_last=False,
                                            num_workers=0)
 trainLoader3 = torch.utils.data.DataLoader(trainData3, batch_size=batchSize, shuffle=True, drop_last=False,
                                            num_workers=0)
 trainLoader4 = torch.utils.data.DataLoader(trainData4, batch_size=batchSize, shuffle=True, drop_last=False,
                                            num_workers=0)
-testLoader1 = torch.utils.data.DataLoader(testData1, batch_size=batchSize, shuffle=True, drop_last=False, num_workers=0)
+testLoader1 = torch.utils.data.DataLoader(testData1, batch_size=batchSize, shuffle=True, drop_last=False, num_workers=0) #load the datasets for testing set
 testLoader2 = torch.utils.data.DataLoader(testData2, batch_size=batchSize, shuffle=True, drop_last=False, num_workers=0)
 testLoader3 = torch.utils.data.DataLoader(testData3, batch_size=batchSize, shuffle=True, drop_last=False, num_workers=0)
 testLoader4 = torch.utils.data.DataLoader(testData4, batch_size=batchSize, shuffle=True, drop_last=False, num_workers=0)
 
 
-model = SAE()
+model = SAE() # select SAE, i.e. Swin Transformer as the feature extractor
 
 print(model)
 
@@ -83,16 +83,16 @@ if trainOnGpu:
     model.cuda()
 
 
-criterion = nn.CosineEmbeddingLoss(margin=0.2)
-dumLabel = torch.ones(batchSize)
+criterion = nn.CosineEmbeddingLoss(margin=0.2) # use cosine embedding loss
+dumLabel = torch.ones(batchSize) # initialize the label
 wrongLabel = torch.zeros(batchSize)
 posLabel = torch.ones(batchSize * 8)
 if trainOnGpu:
     wrongLabel = wrongLabel.cuda()
     posLabel = posLabel.cuda()
 
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-
+optimizer = optim.Adam(model.parameters(), lr=0.001) #set an optimizer
+# set the parameters
 epochs = 100
 punish_a = 0.1
 
@@ -105,7 +105,7 @@ pos_memory_length = 8
 pos_memory = memory.PosMemory()
 
 
-for epoch in range(1, epochs + 1):
+for epoch in range(1, epochs + 1)
 
 
     trainLoss = 0.0
@@ -123,21 +123,21 @@ for epoch in range(1, epochs + 1):
 
         optimizer.zero_grad()
         target = target.unsqueeze(dim=1)
-        output1 = model(data).reshape(batchSize, -1)
-        output2 = model(target).reshape(batchSize, -1)
+        output1 = model(data).reshape(batchSize, -1) # data represents the FBank features
+        output2 = model(target).reshape(batchSize, -1) # target represents the GBank features
         if count < pos_memory_size:
-            loss3 = pos_memory.in_memory(output2, count, batchSize)
+            loss3 = pos_memory.in_memory(output2, count, batchSize) # record historical samples for each round of training, as the negative samples
 
         neg_memory.in_memory(output1)
-        neg_feature = torch.cat(neg_memory.memory, dim=0).reshape(neg_memory_size, -1)
+        neg_feature = torch.cat(neg_memory.memory, dim=0).reshape(neg_memory_size, -1) # generate the negative sample features
 
-        loss1 = criterion(output1, output2, dumLabel)
-        loss2 = F.normalize(output1, p=2, dim=1) @ F.normalize(output2, p=2, dim=1).t()
+        loss1 = criterion(output1, output2, dumLabel) # Close the distance between positive and negative sample pairs
+        loss2 = F.normalize(output1, p=2, dim=1) @ F.normalize(output2, p=2, dim=1).t() # Normalize and calculate the dot product between them
 
         for i in range(batchSize):
             loss2[i][i] = 0
 
-        loss = loss1 + (loss2.mean() + loss3) * punish_a
+        loss = loss1 + (loss2.mean() + loss3) * punish_a # calculate the total loss
         loss.backward(retain_graph=True)
         optimizer.step()
         trainLoss += loss.item() * data.size(0)
